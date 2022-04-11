@@ -1,32 +1,39 @@
 import numpy
 import pandas
-from sklearn.metrics import mean_squared_error
-from sklearn.base import clone
-import numpy as np
-
-
-def rmse_function(y_true: np.array, y_pred: np.array) -> float:
-    # error function to evaluate model accuracy
-    return mean_squared_error(y_true, y_pred, squared=False)
+import matplotlib.pyplot
 
 
 class TimeSeriesSplitter:
+    # splits time series data into sequential train & validation pairs
+    # according to required inputs for train & validation length, window type and number of validations
 
     def __init__(self, data):
+        self.training_validation_labels = None
+        self.training_validation_pairs = None
+        self.training_validation_indices = None
+        self.window_type = None
+        self.n_validations = None
+        self.min_train_periods = None
+        self.training_indices = None
+        self.validation_indices = None
+
         if isinstance(data, pandas.DataFrame):
             self.data = data.values
         elif isinstance(data, numpy.ndarray):
             self.data = data
         elif isinstance(data, list):
-            self.data = np.array(list)
+            self.data = numpy.array(list)
         else:
             raise Exception(
-                f'incompatible data type {type(data)}. Use numpy.ndarray, pandas.DataFrame or list objects.')
+                f'incompatible data type {type(data)}.'
+                f' Use numpy.ndarray, pandas.DataFrame or list objects.'
+            )
 
         self.rows = len(data)
+        self.row_index = numpy.arange(self.rows)
 
-    def check_split_inputs(self, test_periods: int, train_periods: int, min_train_periods: int, n_validations: int,
-                           window: str):
+    def validate_inputs(self, test_periods: int, train_periods: int, min_train_periods: int, n_validations: int,
+                        window_type: str):
         # raises error if these inputs are incompatible compared to the overall rows of the data
 
         if (train_periods is not None) & (min_train_periods is not None):
@@ -37,201 +44,132 @@ class TimeSeriesSplitter:
         if (train_periods is None) & (min_train_periods is None):
             raise Exception('one of train_periods & min_train_periods must be assigned')
 
-        if window not in ['rolling', 'expanding']:
+        if window_type not in ['rolling', 'expanding']:
             raise Exception('training windows must either be "rolling" or "expanding"')
 
-        if (train_periods is not None) & (window == 'expanding'):
+        if (train_periods is not None) & (window_type == 'expanding'):
             raise Exception(
                 'if window is expanding, min_train_periods should be assigned'
-                'train_periods is for a rolling window.'
+                ' train_periods is for a rolling window.'
             )
 
-        if (min_train_periods is not None) & (window == 'rolling'):
+        if (min_train_periods is not None) & (window_type == 'rolling'):
             raise Exception(
                 'if window is rolling, train_periods should be assigned'
-                'min_train_periods is for an expanding window.'
+                ' min_train_periods is for an expanding window.'
             )
-
-        if min_train_periods <= 1:
-            raise Exception('min_train_periods must be at least 2')
-        if train_periods <= 1:
-            raise Exception('train_periods must be at least 2')
-        if n_validations == 0:
-            raise Exception(
-                'the number of validations cannot be 0.'
-                'Please choose a number greater than 0 or do not select a value for this to be calculated for you'
-            )
+        if min_train_periods is not None:
+            if min_train_periods <= 1:
+                raise Exception('min_train_periods must be at least 2')
+        if train_periods is not None:
+            if train_periods <= 1:
+                raise Exception('train_periods must be at least 2')
+        if n_validations is not None:
+            if n_validations == 0:
+                raise Exception('n_validations must be at least 1')
 
         if n_validations is not None:
             min_train_periods = min_train_periods if min_train_periods is not None else train_periods
             if n_validations * test_periods + min_train_periods > self.rows:
                 raise Exception(
                     'the data set is not large enough based on the requirements for'
-                    'the number of validations and size of test_periods & train periods.'
+                    ' the number of validations and size of test_periods & train periods.'
                 )
 
     def split(self, test_periods: int, train_periods: int = None, min_train_periods: int = None,
-              n_validations: int = None, window: str = 'expanding'):
+              n_validations: int = None, window_type: str = 'expanding'):
         # calculates indices for splitting timeseries data
 
-        # validate inputs
-        self.check_split_inputs(test_periods, train_periods, min_train_periods, n_validations, window)
+        self.validate_inputs(test_periods, train_periods, min_train_periods, n_validations, window_type)
 
         # calculate min train periods if not provided
-        if (min_train_periods is None) & (train_periods is not None):
+        if min_train_periods is None:
             min_train_periods = train_periods
 
         # calculate n_validations if not provided
         if n_validations is None:
-            n_validations = np.int(np.floor((self.rows - min_train_periods) / test_periods))
+            n_validations = numpy.int64(numpy.floor((self.rows - min_train_periods) / test_periods))
 
         # configure training windows
-        val_starts = list(self.datetimeseries)[-test_periods:: -test_periods][: n_validations]
-        val_ends = list(self.datetimeseries)[:: -test_periods][: n_validations]
-        validation_datetime_list = list(zip(val_starts, val_ends))
-        validation_datetime_list.reverse()
+        val_starts = list(self.row_index)[-test_periods:: -test_periods][: n_validations]
+        val_ends = list(self.row_index)[:: -test_periods][: n_validations]
+        val_ends = [ve + 1 for ve in val_ends]
+        validation_indices = list(zip(val_starts, val_ends))
+        validation_indices.reverse()
 
-        # adjusting min train period up so that we don't have any gaps not being used for training or validation OR fixing to train_periods input
-        first_val_loc = list(self.datetimeseries).index(min(val_starts))
-        min_train_periods = self.datetimeseries[0: first_val_loc].rows if train_periods is None else train_periods
+        # adjusting min train period up so that we don't have any gaps not being used for training or validation
+        # OR fixing to train_periods input
+        first_val_loc = list(self.row_index).index(min(val_starts))
+        min_train_periods = self.row_index[0: first_val_loc].size if train_periods is None else train_periods
 
         # configure training windows
-        train_ends = list(self.datetimeseries)[-test_periods - 1:: -test_periods][: n_validations]
+        train_ends = list(self.row_index)[-test_periods:: -test_periods][: n_validations]
 
-        if window == 'expanding':
-            train_starts = [self.datetimeseries.min() for i in range(len(train_ends))]
-        elif window == 'rolling':
-            train_starts = list(self.datetimeseries)[-test_periods - min_train_periods:: -test_periods][: n_validations]
+        if window_type == 'expanding':
+            train_starts = [self.row_index.min() for i in range(len(train_ends))]
+        elif window_type == 'rolling':
+            train_starts = list(self.row_index)[-test_periods - min_train_periods:: -test_periods][: n_validations]
 
-        training_datetime_list = list(zip(train_starts, train_ends))
-        training_datetime_list.reverse()
+        training_indices = list(zip(train_starts, train_ends))
+        training_indices.reverse()
 
-        self.validation_datetimes = validation_datetime_list
-        self.training_datetimes = training_datetime_list
-        self.create_training_validation_pairs()
-        self.create_combined_training_validation_data()
-        self.final_train_periods = len(self.training_validation_pairs[-1][0])
+        training_validation_indices = list(zip(training_indices, validation_indices))
 
-    def create_training_validation_pairs(self) -> list:
+        self.validation_indices = validation_indices
+        self.training_indices = training_indices
+        self.n_validations = n_validations
+        self.min_train_periods = min_train_periods
+        self.window_type = window_type
+        self.training_validation_indices = training_validation_indices
+
+    def create_training_validation_pairs(self):
         # return list of data tuples for each training and validation pair
-        df = self.data
-        training_validation_pairs = list()
-        for count in range(len(self.validation_datetimes)):
-            val_start, val_end = self.validation_datetimes[count]
-            train_start, train_end = self.training_datetimes[count]
 
-            training_df = df[(df.index >= train_start) & (df.index <= train_end)].copy(deep=True)
-            validation_df = df[(df.index >= val_start) & (df.index <= val_end)].copy(deep=True)
-            training_validation_pairs.append(tuple((training_df, validation_df)))
+        training_validation_pairs = list(range(self.n_validations))
+        for count in range(self.n_validations):
+            val_start, val_end = self.validation_indices[count]
+            val_data = self.data[val_start: val_end]
+
+            train_start, train_end = self.training_indices[count]
+            train_data = self.data[train_start: train_end]
+
+            training_validation_pairs[count] = tuple((train_data, val_data))
 
         self.training_validation_pairs = training_validation_pairs
 
-    def create_combined_training_validation_data(self) -> tuple:
-        # returns data with a column for each validation set flagging if the datetime is for training or validation
+    def create_training_validation_labels(self):
+        # returns array with train & val labels for each validation set
 
-        df = (self.data  # leaving just the datetime index
-              .drop(columns=self.data.columns)
-              )
-        for count in range(len(self.validation_datetimes)):
-            val_start, val_end = self.validation_datetimes[count]
-            train_start, train_end = self.training_datetimes[count]
+        df = numpy.empty((self.rows, self.n_validations), dtype=str)
 
-            df[f'validation_{count + 1}'] = np.where((df.index >= train_start) & (df.index <= train_end), 'training',
-                                                     np.where((df.index >= val_start) & (df.index <= val_end),
-                                                              'validation',
-                                                              None
-                                                              )
-                                                     )
-        self.combined_training_validation_data = df
+        for count in range(self.n_validations):
+            val_start, val_end = self.validation_indices[count]
+            df[val_start: val_end, count: count + 1] = 'v'
 
-    def plot(self) -> tuple:
+            train_start, train_end = self.training_indices[count]
+            df[train_start: train_end, count: count + 1] = 't'
+
+        self.training_validation_labels = df
+
+    def plot(self):
         # returns gantt style chart of the validation and training periods for visualisation purposes
-        import matplotlib.pyplot as plt
-        import matplotlib.axes as ax
-        from matplotlib.patches import Patch
-        plt.rcParams['figure.figsize'] = [8, 8]
 
-        vgant_df = (pd.DataFrame(self.validation_datetimes, columns=['start', 'end'])
-                    .assign(val_period=lambda x: 'validation_' + (x.index + 1).map(str),
-                            task='validation',
+        # Declaring a figure "gnt"
+        fig, gnt = matplotlib.pyplot.subplots()
+
+        for i in range(self.n_validations):
+            val_indices = self.validation_indices[i]
+            gnt.broken_barh([(val_indices[0], val_indices[1] - val_indices[0])], (i, 1),
+                            facecolors='orange'
                             )
-                    )
-        tgant_df = (pd.DataFrame(self.training_datetimes, columns=['start', 'end'])
-                    .assign(val_period=lambda x: 'validation_' + (x.index + 1).map(str),
-                            task='training',
+
+            train_indices = self.training_indices[i]
+            gnt.broken_barh([(train_indices[0], train_indices[1] - train_indices[0])], (i, 1),
+                            facecolors='red'
                             )
-                    )
-        min_datetime = tgant_df['start'].min()
-        gant_df = (vgant_df
-                   .append(tgant_df)
-                   .assign(periods=lambda x: x['end'] - x['start'])
-                   )
-        # legend
-        c_dict = {'validation': '#E64646', 'training': '#E69646'}
-        gant_df['color'] = gant_df['task'].apply(lambda x: c_dict[x])
-        legend_elements = [Patch(facecolor=c_dict[i], label=i) for i in c_dict]
-        plt.legend(handles=legend_elements)
-
-        # plot
-        plt.barh(gant_df['val_period'], gant_df['periods'], left=gant_df['start'], color=gant_df['color'], linewidth=1,
-                 edgecolor='black')
-
-        # format
-        plt.title('time-series nested CV plot')
-        xticks = ax.Axes.get_xticks(plt.gca().axes)
-        plt.xticks([xticks[0], xticks[-1]], labels=[gant_df['start'].min(), gant_df['end'].max()], visible=False)
-        plt.xlim(xmin=xticks[0])
-        plt.show()
-
-    def model_validation_errors(self, model: object, y_column: str, error_function=rmse_function) -> list:
-        # returns list of errors based on chosen model and error function
-        # train, fit and evaluate model for each training + validation pair
-        errors = list()
-        base_total = 0
-        cumulative_error = 0
-        for training_df, validation_df in self.training_validation_pairs:
-            # fit model
-            train_y = training_df[y_column]
-            train_x = training_df.drop(columns=[y_column])
-            model.fit(train_x, train_y)
-
-            # predict
-            y_true = validation_df[y_column]
-            val_x = validation_df.drop(columns=[y_column])
-            y_pred = model.predict(val_x)
-            errors.append(error_function(y_true, y_pred))
-
-            base_total += np.abs(validation_df[y_column]).sum()
-            cumulative_error += np.abs(np.sum(y_true) - np.sum(y_pred))
-
-        cumulative_error_percent = 1 if base_total == 0 else cumulative_error / base_total
-        return errors, cumulative_error_percent
-
-    def find_best_model(self, models: list, y_column: str, error_function=rmse_function) -> list:
-        # returns model errors, best model and coefficients from a list of models
-        # find best model from list
-        best_error = np.inf
-        dct = {}
-        for m in models:
-
-            errors, cumulative_error_percent = self.model_validation_errors(m, y_column, error_function)
-            avg_error = np.mean(errors)
-            dct[str(m)] = {'avg_error': avg_error,
-                           'all_errors:': errors,
-                           'cumulative_error_percent': cumulative_error_percent
-                           }
-            if avg_error < best_error:
-                dct['best_model'] = clone(m)
-                best_error = avg_error
-                dct['best_error'] = best_error
-                dct['cumulative_error_percent'] = cumulative_error_percent
-
-        return dct
-
-
-array2d = np.arange(100).reshape((25, 4))
-
-tss = TimeSeriesSplitter(array2d)
-
-test = None
-print(test.isnull())
+        gnt.set_xlabel('time')
+        gnt.set_ylabel('validations')
+        matplotlib.pyplot.xticks([])
+        matplotlib.pyplot.yticks([])
+        matplotlib.pyplot.title('timeseries nested cross validation plot')
+        matplotlib.pyplot.show()
