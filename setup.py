@@ -8,7 +8,7 @@ with codecs.open(os.path.join(here, 'README.md'), encoding='utf-8') as fh:
     long_description = '\n' + fh.read()
 
 VERSION = '0.0.1'
-DESCRIPTION = 'add short description'
+DESCRIPTION = 'add useful functionality to sci-kit learn'
 
 # Setting up
 setup(
@@ -16,8 +16,10 @@ setup(
     version=VERSION,
     author='https://github.com/jcatankard',
     description=DESCRIPTION,
+    long_description_content_type='text/markdown',
+    long_description=long_description,
     packages=find_packages(),
-    install_requires=['add package dependencies'],
+    install_requires=['numpy', 'pandas', 'matplotlib'],
     keywords=[],
     classifiers=[
         'Programming Language :: Python :: 3'
