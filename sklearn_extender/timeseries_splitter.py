@@ -52,20 +52,6 @@ class TimeSeriesSplitter:
                 'min_train_periods is for an expanding window.'
             )
 
-        if (n_validations is not None) & (train_periods is not None):
-            if n_validations * (test_periods + train_periods) > self.rows:
-                raise Exception(
-                    'the data set is not large enough based on the requirements for'
-                    'the number of validations and size of test_periods & train_periods.'
-                )
-        if (n_validations is not None) & (min_train_periods is not None):
-            train_periods_values = [min_train_periods + i for i in range(n_validations)]
-            if (n_validations * test_periods) + sum(train_periods_values) > self.rows:
-                raise Exception(
-                    'the data set is not large enough based on the requirements for'
-                    'the number of validations and size of min_train_periods & train_periods.'
-                )
-
         if min_train_periods <= 1:
             raise Exception('min_train_periods must be at least 2')
         if train_periods <= 1:
@@ -75,6 +61,14 @@ class TimeSeriesSplitter:
                 'the number of validations cannot be 0.'
                 'Please choose a number greater than 0 or do not select a value for this to be calculated for you'
             )
+
+        if n_validations is not None:
+            min_train_periods = min_train_periods if min_train_periods is not None else train_periods
+            if n_validations * test_periods + min_train_periods > self.rows:
+                raise Exception(
+                    'the data set is not large enough based on the requirements for'
+                    'the number of validations and size of test_periods & train periods.'
+                )
 
     def split(self, test_periods: int, train_periods: int = None, min_train_periods: int = None,
               n_validations: int = None, window: str = 'expanding'):
