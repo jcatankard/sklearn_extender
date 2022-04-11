@@ -1,6 +1,6 @@
 # sklearn_extender
 
-- the purpose of this project is to add a little extra functionality to the sci-kit learn library that i have found useful and from which the larger community may also benefit.
+- the purpose of this project is to add a little extra functionality to the sci-kit learn library that I have found useful and from which the larger community may also benefit.
 - a secondary purpose is simply for me to learn how to create and publish a python package.
 
 ## github
@@ -14,8 +14,8 @@
 - this explores how we can use logarithmic transformations to convert linear, additive models to multiplicative ones
 - this only works with linear models (e.g., not random forest)
 
-### boostrapper:
-- this explores how we can use two bootstrapping techniques to create prediction intervals for a given level of signficance
+### bootstrapper:
+- this explores how we can use two bootstrapping techniques to create prediction intervals for a given level of significance
 - and also to create confidence intervals & p-values for our model coefficients (where available)
 
 ### timeseries_splitter:
@@ -70,23 +70,23 @@
 ### self.n_validations
   - returns number of validation periods
 ### self.min_train_periods
-  - returns number of training periods in first validation set
+  - returns number of training periods in first validation set start & end
 ### self.training_indices
-  - returns list of tuples representing the indices for each training set
+  - returns list of tuples representing the indices for each training set start & end
   - note (0, 100) is 0 to 99 inclusive
 ### self.validation_indices
-  - returns list of tuples representing the indices for each validation set
+  - returns list of tuples representing the indices for each validation set start & end
   - note (0, 100) is 0 to 99 inclusive
 ### self.training_validation_indices
-  - returns list of tuples of tuples representing the indices for each validation set
+  - returns list of tuples representing the indices for each validation set start & end
   - note (0, 100) is 0 to 99 inclusive
 
 ## examples
 ```
-from sklearn.linear_model import LinearRegression
-import numpy as np
 from sklearn_extender.timeseries_splitter import TimeSeriesSplitter
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
+import numpy as np
 
 # initialise TimeSeriesSplitter object
 array2d = np.arange(4000).reshape((1000, 4))

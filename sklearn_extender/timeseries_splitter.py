@@ -1,5 +1,4 @@
 import numpy
-import pandas
 import matplotlib.pyplot
 
 
@@ -15,29 +14,19 @@ class TimeSeriesSplitter:
         self.training_indices = None
         self.validation_indices = None
 
-        if isinstance(X, pandas.DataFrame) | isinstance(X, pandas.Series):
-            self.x_data = X.values
-        elif isinstance(X, numpy.ndarray):
+        if isinstance(X, numpy.ndarray):
             self.x_data = X
         elif isinstance(X, list):
-            self.x_data = numpy.array(list)
+            self.x_data = numpy.array(X)
         else:
-            raise Exception(
-                f'incompatible data type {type(X)}.'
-                f' Use numpy.ndarray, pandas.DataFrame or list objects.'
-            )
+            self.x_data = X.values
 
-        if isinstance(y, pandas.DataFrame) | isinstance(y, pandas.Series):
-            self.y_data = y.values
-        elif isinstance(y, numpy.ndarray):
+        if isinstance(y, numpy.ndarray):
             self.y_data = y
-        elif isinstance(y, list):
-            self.y_data = numpy.array(list)
+        elif isinstance(X, list):
+            self.y_data = numpy.array(y)
         else:
-            raise Exception(
-                f'incompatible data type {type(y)}.'
-                f' Use numpy.ndarray, pandas.DataFrame or list objects.'
-            )
+            self.y_data = y.values
 
         if len(X) != len(y):
             raise Exception('X and y must be of same length')
@@ -186,5 +175,7 @@ class TimeSeriesSplitter:
         gnt.set_ylabel('validations')
         matplotlib.pyplot.xticks([])
         matplotlib.pyplot.yticks([])
-        matplotlib.pyplot.title('timeseries nested cross validation plot')
+        title = f'timeseries cv with {self.window_type} window' \
+                f' and {self.n_validations} validations'
+        matplotlib.pyplot.title(title)
         matplotlib.pyplot.show()

@@ -19,7 +19,7 @@ setup(
     long_description_content_type='text/markdown',
     long_description=long_description,
     packages=find_packages(),
-    install_requires=['numpy', 'pandas', 'matplotlib'],
+    install_requires=['numpy', 'matplotlib'],
     keywords=[],
     classifiers=[
         'Programming Language :: Python :: 3'
