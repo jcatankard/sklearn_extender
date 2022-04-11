@@ -7,9 +7,7 @@ class TimeSeriesSplitter:
     # splits time series data into sequential train & validation pairs
     # according to required inputs for train & validation length, window type and number of validations
 
-    def __init__(self, data):
-        self.training_validation_labels = None
-        self.training_validation_pairs = None
+    def __init__(self, X, y):
         self.training_validation_indices = None
         self.window_type = None
         self.n_validations = None
@@ -17,20 +15,35 @@ class TimeSeriesSplitter:
         self.training_indices = None
         self.validation_indices = None
 
-        if isinstance(data, pandas.DataFrame):
-            self.data = data.values
-        elif isinstance(data, numpy.ndarray):
-            self.data = data
-        elif isinstance(data, list):
-            self.data = numpy.array(list)
+        if isinstance(X, pandas.DataFrame) | isinstance(X, pandas.Series):
+            self.x_data = X.values
+        elif isinstance(X, numpy.ndarray):
+            self.x_data = X
+        elif isinstance(X, list):
+            self.x_data = numpy.array(list)
         else:
             raise Exception(
-                f'incompatible data type {type(data)}.'
+                f'incompatible data type {type(X)}.'
                 f' Use numpy.ndarray, pandas.DataFrame or list objects.'
             )
 
-        self.rows = len(data)
-        self.row_index = numpy.arange(self.rows)
+        if isinstance(y, pandas.DataFrame) | isinstance(y, pandas.Series):
+            self.y_data = y.values
+        elif isinstance(y, numpy.ndarray):
+            self.y_data = y
+        elif isinstance(y, list):
+            self.y_data = numpy.array(list)
+        else:
+            raise Exception(
+                f'incompatible data type {type(y)}.'
+                f' Use numpy.ndarray, pandas.DataFrame or list objects.'
+            )
+
+        if len(X) != len(y):
+            raise Exception('X and y must be of same length')
+        else:
+            self.rows = len(y)
+            self.row_index = numpy.arange(self.rows)
 
     def validate_inputs(self, test_periods: int, train_periods: int, min_train_periods: int, n_validations: int,
                         window_type: str):
@@ -122,22 +135,24 @@ class TimeSeriesSplitter:
         self.window_type = window_type
         self.training_validation_indices = training_validation_indices
 
-    def create_training_validation_pairs(self):
-        # return list of data tuples for each training and validation pair
+    def training_validation_data(self) -> list:
+        # creates list of tuples containing array of values for each training and validation pair
 
-        training_validation_pairs = list(range(self.n_validations))
+        training_validation_data = list(range(self.n_validations))
         for count in range(self.n_validations):
             val_start, val_end = self.validation_indices[count]
-            val_data = self.data[val_start: val_end]
+            x_val_data = self.x_data[val_start: val_end]
+            y_val_data = self.y_data[val_start: val_end]
 
             train_start, train_end = self.training_indices[count]
-            train_data = self.data[train_start: train_end]
+            x_train_data = self.x_data[train_start: train_end]
+            y_train_data = self.y_data[train_start: train_end]
 
-            training_validation_pairs[count] = tuple((train_data, val_data))
+            training_validation_data[count] = tuple((x_train_data, x_val_data, y_train_data, y_val_data))
 
-        self.training_validation_pairs = training_validation_pairs
+        return training_validation_data
 
-    def create_training_validation_labels(self):
+    def training_validation_labels(self):
         # returns array with train & val labels for each validation set
 
         df = numpy.empty((self.rows, self.n_validations), dtype=str)
@@ -149,7 +164,7 @@ class TimeSeriesSplitter:
             train_start, train_end = self.training_indices[count]
             df[train_start: train_end, count: count + 1] = 't'
 
-        self.training_validation_labels = df
+        return df
 
     def plot(self):
         # returns gantt style chart of the validation and training periods for visualisation purposes
