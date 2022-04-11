@@ -1,1 +1,1 @@
-from sklearn_extender import bootstrapper
+from sklearn_extender import timeseries_splitter
