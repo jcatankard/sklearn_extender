@@ -1,2 +1,3 @@
+import testfunction as tf
 if __name__ == '__main__':
-    print('test1')
+    tf.test_function('hello')
