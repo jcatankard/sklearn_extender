@@ -10,19 +10,18 @@
  - add link to pypi project
 
 # overview
-### model extender
+## model extender
 - expands on the functionality of regular sci-kit learn models
-#### multiplicative seasonality: 
-- this explores how we can use logarithmic transformations to convert linear, additive models to multiplicative ones
-- this is best used with linear models (e.g., not random forest)
+- adding multiplicative seasonality
+- calculating prediction intervals
+- coefficient confidence intervals & p-values
+- returning coefficients as a dictionary
+- defining the size of the training data used to fit model (useful to testing what is the optimal size)
 
-#### bootstrapper:
-- this explores how we can use two bootstrapping techniques to create prediction intervals for a given level of significance
-- and also to create confidence intervals & p-values for our model coefficients (where available)
-
-### timeseries_splitter:
+## timeseries_splitter:
 - it is important to validate our models with test & validation data sets and in the case of timeseries, these should respect the order of time (i.e. training sets precede validations sets)
 - this is otherwise known as time series nested cross validation
+- useful for learning how good our models are and comparing which model is best if you have many in a robust way
 
 # timeseries_splitter
 ## sklearn_extender.timeseries_splitter
