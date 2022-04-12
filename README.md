@@ -10,11 +10,13 @@
  - add link to pypi project
 
 # overview
-### add multiplicative seasonality:
+### model extender
+- expands on the functionality of regular sci-kit learn models
+#### multiplicative seasonality: 
 - this explores how we can use logarithmic transformations to convert linear, additive models to multiplicative ones
-- this only works with linear models (e.g., not random forest)
+- this is best used with linear models (e.g., not random forest)
 
-### bootstrapper:
+#### bootstrapper:
 - this explores how we can use two bootstrapping techniques to create prediction intervals for a given level of significance
 - and also to create confidence intervals & p-values for our model coefficients (where available)
 
@@ -105,7 +107,28 @@ for X_train, X_val, y_train, y_val in tss.training_validation_data:
     
 avg_error = total_error / tss.n_validations
 ```
-
+# model extender
+## sklearn_extender.model_extender
+### function model_extender(model, multiplicative_seasonality=False, train_size=None, **kwargs)
+#### Parameters
+##### model
+ - accepts sci-kit learn style model that will have its functionality modified
+##### multiplicative_seasonality
+ - if True applies np.log(x + 1) transformation to X & y values when fitting model & predicting
+ - returns normalised values after predicting
+ - train and test values for fitting and predicting must be >= 0
+ - takes np.log(x + 1) to handle boolean (i.e. 0 or 1) values otherwise would throw error for np.log(0)
+ - this is best used with linear models (e.g. not random forest)
+#### train_size
+ - if positive will take train_size number of rows from tail of train values (tail because it is assumed that time series are in ascending order)
+ - if negative will take train_size number of rows from head of train values
+#### **kwargs
+ - any other key word arguments that would be passed to the sci-kit learn model (such as fit_intercept=True)
+## methods
+### self.coefs(labels, intercept=True)
+ - returns model coefficients as a dictionary with labels as keywords
+ - includes intercept if = True
+ - is not compatible with models that don't have .coef_ attribute
 
 
 

@@ -2,7 +2,7 @@ import sklearn_extender.coefficients
 import numpy
 
 
-def model_extender(model, multiplicative_seasonality=False, train_size=None, **kwargs):
+def model_extender(model, multiplicative_seasonality: bool = False, train_size: int = None, **kwargs):
     # creates a class that inherits from sklearn model
     # adding new functionality for:
     # multiplicative seasonality
@@ -12,7 +12,7 @@ def model_extender(model, multiplicative_seasonality=False, train_size=None, **k
 
     class SKLearnExtenderClass(model):
 
-        def __init__(self, multiplicative_seasonality=False, train_size=None, **kwargs):
+        def __init__(self, multiplicative_seasonality: bool = False, train_size: int = None, **kwargs):
 
             if isinstance(multiplicative_seasonality, bool):
                 self.multiplicative_seasonality = multiplicative_seasonality
