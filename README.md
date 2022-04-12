@@ -53,10 +53,6 @@
 ##### n_validations
  - number of validations periods required
  - if None, this will be calculated based on other parameters
-### TimeSeriesSplitter.training_validation_data(self)
- - returns list of tuples containing array of values for each training and validation pair
-### TimeSeriesSplitter.training_validation_labels(self)
- - returns an array of labels to help visualise each training & validation set
 ### TimeSeriesSplitter.plot(self)
  - plots a Gantt style graph to help visualise each training & validation set
 
@@ -80,6 +76,8 @@
 ### self.training_validation_indices
   - returns list of tuples representing the indices for each validation set start & end
   - note (0, 100) is 0 to 99 inclusive
+### TimeSeriesSplitter.training_validation_data
+ - returns list of tuples containing array of values for each training and validation pair
 
 ## examples
 ```
@@ -100,7 +98,7 @@ tss_inputs.plot()
 # validate model
 model = LinearRegression()
 total_error = 0
-for X_train, X_val, y_train, y_val in tss.training_validation_data():
+for X_train, X_val, y_train, y_val in tss.training_validation_data:
     model.fit(X_train, y_train)
     y_pred = model.predict(X_val)
     total_error += mean_squared_error(y_val, y_pred, squared=False)

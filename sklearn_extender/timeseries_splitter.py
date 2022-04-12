@@ -124,6 +124,7 @@ class TimeSeriesSplitter:
         self.window_type = window_type
         self.training_validation_indices = training_validation_indices
 
+    @property
     def training_validation_data(self) -> list:
         # creates list of tuples containing array of values for each training and validation pair
 
@@ -140,20 +141,6 @@ class TimeSeriesSplitter:
             training_validation_data[count] = tuple((x_train_data, x_val_data, y_train_data, y_val_data))
 
         return training_validation_data
-
-    def training_validation_labels(self):
-        # returns array with train & val labels for each validation set
-
-        df = numpy.empty((self.rows, self.n_validations), dtype=str)
-
-        for count in range(self.n_validations):
-            val_start, val_end = self.validation_indices[count]
-            df[val_start: val_end, count: count + 1] = 'v'
-
-            train_start, train_end = self.training_indices[count]
-            df[train_start: train_end, count: count + 1] = 't'
-
-        return df
 
     def plot(self):
         # returns gantt style chart of the validation and training periods for visualisation purposes
