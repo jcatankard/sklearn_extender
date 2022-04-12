@@ -28,6 +28,8 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
             self.coefs = None
             self.preds = None
             self.train_x = None
+            self.train_y = None
+            self.pred_x = None
 
             super().__init__(**kwargs)
 
@@ -56,6 +58,7 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
                     y = y[- self.train_size:]
 
             self.train_x = x
+            self.train_y = y
 
             if self.multiplicative_seasonality:
                 if (x.min() < 0) | (y.min() < 0):
@@ -78,6 +81,8 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
                 x = numpy.array(x)
             else:
                 x = x.values
+
+            self.pred_x = x
 
             if self.multiplicative_seasonality:
                 if x.min() < 0:
