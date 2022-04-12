@@ -1,4 +1,4 @@
-def coefficients(self, labels, intercept=True):
+def coefficients(self, labels: list, intercept: bool = True) -> dict:
     # returns dictionary with coefficients as values and labels as keys
     coefs = dict(zip(labels, self.coef_))
     if intercept:
