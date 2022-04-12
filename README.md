@@ -112,6 +112,7 @@ avg_error = total_error / tss.n_validations
 #### Parameters
 ##### model
  - accepts sci-kit learn style model that will have its functionality modified
+ - not all models will benefit from the additional functionality (e.g. all are useful for linear type models but only some for random forest)
 ##### multiplicative_seasonality
  - if True applies np.log(x + 1) transformation to X & y values when fitting model & predicting
  - returns normalised values after predicting
