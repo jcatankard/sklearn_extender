@@ -1,4 +1,5 @@
 import sklearn_extender.coefficients
+import sklearn_extender.bootstrapping
 import numpy
 
 
@@ -23,6 +24,10 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
                 self.train_size = train_size
             else:
                 raise Exception('train_size must be None or a non-zero integer')
+
+            self.coefs = None
+            self.preds = None
+            self.train_x = None
 
             super().__init__(**kwargs)
 
@@ -49,6 +54,8 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
                 elif self.train_size < 0:
                     x = x[- self.train_size:]
                     y = y[- self.train_size:]
+
+            self.train_x = x
 
             if self.multiplicative_seasonality:
                 if (x.min() < 0) | (y.min() < 0):
@@ -87,8 +94,10 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
             if self.multiplicative_seasonality:
                 y = numpy.exp(y) - 1
 
+            self.preds = y
             return y
 
         coefs = sklearn_extender.coefficients.coefficients
+        prediction_intervals = sklearn_extender.bootstrapping.prediction_intervals
 
     return SKLearnExtenderClass(multiplicative_seasonality, train_size, **kwargs)

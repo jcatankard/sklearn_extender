@@ -3,4 +3,6 @@ def coefficients(self, labels: list, intercept: bool = True) -> dict:
     coefs = dict(zip(labels, self.coef_))
     if intercept:
         coefs['intercept'] = self.intercept_
+
+    self.coefs = coefs
     return coefs

@@ -2,33 +2,39 @@ from sklearn.base import clone
 import numpy
 
 
-def prediction_intervals_method1():
+def pred_intervals_training_data(self, sig_level: float, n_trials: int, seed: int):
 
-    return
-
-def prediction_intervals_method2(preds: numpy.ndarray, sig_level: float, samples: int, seed: int):
+    model = clone(self)
 
     return pred_range
 
-def prediction_intervals(self, x, bootstrap_method='x', sig_level: float = 95.0,
-                         samples: int = 100, seed: int = 10):
+
+def pred_intervals_pred_data(self, sig_level: float, n_trials: int, seed: int):
+
+    return pred_range
+
+
+def prediction_intervals(self, bootstrap_method='training_data', sig_level: float = 95.0,
+                         n_trials: int = 100, seed: int = 10):
     # returns a higher and lower prediction interval
-    if isinstance(x, numpy.ndarray):
-        pass
-    elif isinstance(x, list):
-        x = numpy.array(x)
-    else:
-        x = x.values
 
     if sig_level < 50:
         raise Exception('significance level should be between 50 and 100.'
                         'common values include 90, 95, 97.5, 99 etc.')
-    # bootstrap method imputs
-    # create preds
-    if bootstrap_method == 'method1':
-        pred_range = prediction_intervals_method2
-    elif
+    if bootstrap_method not in ['training_data', 'pred_data']:
+        raise Exception('bootstrap_method must be either training_data or pred_data')
 
-    # apply range on orinignal preds
+    if ~isinstance(seed, int):
+        raise Exception('seed must be integer')
 
-    return array2d
+    if ~isinstance(n_trials, int):
+        raise Exception('n_trials must be integer')
+
+    if bootstrap_method == 'training_data':
+        pred_range = pred_intervals_training_data(sig_level, n_trials, seed)
+
+    elif bootstrap_method == 'pred_data':
+        pred_range = pred_intervals_pred_data(sig_level, n_trials, seed)
+
+
+    return pred_range
