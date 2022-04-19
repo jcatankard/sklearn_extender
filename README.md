@@ -14,7 +14,7 @@
 - expands on the functionality of regular sci-kit learn models
 - adding multiplicative seasonality
 - calculating prediction intervals
-- coefficient confidence intervals & p-values
+- coefficient confidence intervals & p-values of coefficients
 - returning coefficients as a dictionary
 - defining the size of the training data used to fit model (useful to testing what is the optimal size)
 
@@ -82,8 +82,8 @@
 
 ## examples
 <p float="left">
-  <img src="./images/timeseries_splitter_rolling.png" width="49%" />
-  <img src="/images/timeseries_splitter_expanding.png" width="49%" /> 
+  <img src="./images/timeseries_splitter_rolling.png" width="48%" />
+  <img src="/images/timeseries_splitter_expanding.png" width="48%" /> 
 </p>
 
 ```
@@ -145,8 +145,8 @@ avg_error = total_error / tss.n_validations
 
 ## examples
 <p float="left">
-  <img src="./images/pred_intervals_by_datapoint.png" width="49%" />
-  <img src="/images/pred_intervals_overall.png" width="49%" /> 
+  <img src="./images/pred_intervals_by_datapoint.png" width="48%" />
+  <img src="/images/pred_intervals_overall.png" width="48%" /> 
 </p>
 
 ```
