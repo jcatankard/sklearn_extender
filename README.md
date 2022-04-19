@@ -25,7 +25,7 @@
 
 # timeseries_splitter
 ## sklearn_extender.timeseries_splitter
-### class TimeSeriesSplitter(self, X, y)
+### class: TimeSeriesSplitter(self, X, y)
 #### Parameters
 ##### X
  - numpy.array, list, pandas.DataFrame, pandas.Series
@@ -108,7 +108,7 @@ avg_error = total_error / tss.n_validations
 ```
 # model extender
 ## sklearn_extender.model_extender
-### function model_extender(model, multiplicative_seasonality=False, train_size=None, **kwargs)
+### function: model_extender(model, multiplicative_seasonality=False, train_size=None, **kwargs)
 #### Parameters
 ##### model
  - accepts sci-kit learn style model that will have its functionality modified
@@ -129,6 +129,14 @@ avg_error = total_error / tss.n_validations
  - returns model coefficients as a dictionary with labels as keywords
  - includes intercept if = True
  - is not compatible with models that don't have .coef_ attribute
+### self.prediction_intervals(how='datapoint', sig_level: float = 95.0, n_trials: int = 10 ** 4)
+ - returns prediction intervals for a given level of significance
+ - n_trails - the higher the more accurate the prediction intervals but the longer the processing time
+ - how
+   - 'datapoint' is best when each individual prediction are the unit of interest (e.g., day in a time-series or price of each house)
+   - 'datapoint' is also best when the predicted metric is a form of average (e.g., conversion rate, average sell price, gross margin)
+   - 'overall' is best when predicted metric is 'summable' (e.g., number of items sold) and when the individual prediction values are less important than the aggregated total
+     - this will result in narrower prediction intervals than 'datapoint'
 
 
 
