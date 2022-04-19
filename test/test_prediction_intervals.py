@@ -50,8 +50,8 @@ preds = model.predict(test_x)
 
 # create interval ranges
 t0 = time.time()
-# interval_range = model.prediction_intervals(how='overall', sig_level=95, n_trials=10 ** 4)
-interval_range = model.prediction_intervals(how='datapoint', sig_level=95, n_trials=10 ** 4)
+interval_range = model.prediction_intervals(how='overall', sig_level=95, n_trials=10 ** 4)
+# interval_range = model.prediction_intervals(how='datapoint', sig_level=95, n_trials=10 ** 4)
 t1 = time.time()
 print('time', round(t1 - t0, 4))
 
@@ -67,7 +67,8 @@ print(round(sum_upper, 1), round(sum_upper / sum_actuals - 1, 4))
 # plot results
 plt.plot(test_df['date'], preds, label='preds', color='pink')
 plt.fill_between(test_df['date'], (interval_range[0]), (interval_range[1]), color='blue', alpha=0.5)
-plt.plot(test_df['date'], test_y, label='actuals', color='orange')
+# plt.plot(test_df['date'], test_y, label='actuals', color='orange')
 plt.legend()
+plt.ylim(bottom=0)
 plt.show()
 

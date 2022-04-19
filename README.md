@@ -81,6 +81,11 @@
  - returns list of tuples containing array of values for each training and validation pair
 
 ## examples
+<p float="left">
+  <img src="./images/timeseries_splitter_rolling.png" width="49%" />
+  <img src="/images/timeseries_splitter_expanding.png" width="49%" /> 
+</p>
+
 ```
 from sklearn_extender.timeseries_splitter import TimeSeriesSplitter
 from sklearn.linear_model import LinearRegression
@@ -138,8 +143,50 @@ avg_error = total_error / tss.n_validations
    - 'overall' is best when predicted metric is 'summable' (e.g., number of items sold) and when the individual prediction values are less important than the aggregated total
      - this will result in narrower prediction intervals than 'datapoint'
 
+## examples
+<p float="left">
+  <img src="./images/pred_intervals_by_datapoint.png" width="49%" />
+  <img src="/images/pred_intervals_overall.png" width="49%" /> 
+</p>
 
+```
+from sklearn_extender.model_extender import model_extender
+from sklearn.linear_model import LinearRegression
+import numpy
+import pandas as pd
 
+# import and inspect data
+df = pd.read_csv('daily_flights.csv')
+
+# split into train and test
+train_df = df[df['date'].dt.year < 2022].copy(deep=True)
+train_x = (train_df
+           .copy(deep=True)
+           .drop(columns=['date', 'flights'])
+           )
+train_y = train_df['flights']
+
+test_df = df[df['date'].dt.year == 2022].copy(deep=True)
+test_x = (test_df
+           .copy(deep=True)
+           .drop(columns=['date', 'flights'])
+          )
+test_y = test_df['flights']
+
+# initiate fit and predict
+model = model_extender(LinearRegression, multiplicative_seasonality=True)
+model.fit(train_x, train_y)
+
+# create coefficient dictionary
+coefs = model.coefs(labels=test_x.columns, intercept=True)
+print(coefs)
+
+# make predictions
+preds = model.predict(test_x)
+
+# create interval ranges
+interval_range = model.prediction_intervals(how='overall', sig_level=95, n_trials=10 ** 4)
+```
     
 
 
