@@ -1,5 +1,5 @@
 import sklearn_extender.coefficients
-import sklearn_extender.bootstrapping
+import sklearn_extender.prediction_intervals
 import numpy
 
 
@@ -25,7 +25,6 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
             else:
                 raise Exception('train_size must be None or a non-zero integer')
 
-            self.coefs = None
             self.preds = None
             self.train_x = None
             self.train_y = None
@@ -40,14 +39,14 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
             elif isinstance(x, list):
                 x = numpy.array(x)
             else:
-                x = x.values
+                x = numpy.array(x.values)
 
             if isinstance(y, numpy.ndarray):
                 pass
             elif isinstance(y, list):
                 y = numpy.array(y)
             else:
-                y = y.values
+                y = numpy.array(y.values)
 
             if self.train_size is not None:
                 if self.train_size > 0:
@@ -80,7 +79,7 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
             elif isinstance(x, list):
                 x = numpy.array(x)
             else:
-                x = x.values
+                x = numpy.array(x.values)
 
             self.pred_x = x
 
@@ -103,6 +102,6 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
             return y
 
         coefs = sklearn_extender.coefficients.coefficients
-        prediction_intervals = sklearn_extender.bootstrapping.prediction_intervals
+        prediction_intervals = sklearn_extender.prediction_intervals.prediction_intervals
 
     return SKLearnExtenderClass(multiplicative_seasonality, train_size, **kwargs)

@@ -6,7 +6,7 @@ class TimeSeriesSplitter:
     # splits time series data into sequential train & validation pairs
     # according to required inputs for train & validation length, window type and number of validations
 
-    def __init__(self, X, y):
+    def __init__(self, x, y):
         self.training_validation_indices = None
         self.window_type = None
         self.n_validations = None
@@ -14,21 +14,21 @@ class TimeSeriesSplitter:
         self.training_indices = None
         self.validation_indices = None
 
-        if isinstance(X, numpy.ndarray):
-            self.x_data = X
-        elif isinstance(X, list):
-            self.x_data = numpy.array(X)
+        if isinstance(x, numpy.ndarray):
+            self.x_data = x
+        elif isinstance(x, list):
+            self.x_data = numpy.array(x)
         else:
-            self.x_data = X.values
+            self.x_data = numpy.array(x.values)
 
         if isinstance(y, numpy.ndarray):
             self.y_data = y
-        elif isinstance(X, list):
+        elif isinstance(x, list):
             self.y_data = numpy.array(y)
         else:
-            self.y_data = y.values
+            self.y_data = numpy.array(y.values)
 
-        if len(X) != len(y):
+        if len(x) != len(y):
             raise Exception('X and y must be of same length')
         else:
             self.rows = len(y)
