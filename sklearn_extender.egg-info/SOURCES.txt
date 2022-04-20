@@ -1,0 +1,17 @@
+LICENSE.txt
+README.md
+setup.py
+sklearn_extender/__init__.py
+sklearn_extender/coefficients.py
+sklearn_extender/model_extender.py
+sklearn_extender/prediction_intervals.py
+sklearn_extender/timeseries_splitter.py
+sklearn_extender.egg-info/PKG-INFO
+sklearn_extender.egg-info/SOURCES.txt
+sklearn_extender.egg-info/dependency_links.txt
+sklearn_extender.egg-info/requires.txt
+sklearn_extender.egg-info/top_level.txt
+test/test_coefs.py
+test/test_modelextender1.py
+test/test_prediction_intervals.py
+test/test_timeseriessplitter.py

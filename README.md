@@ -95,11 +95,11 @@ import numpy as np
 # initialise TimeSeriesSplitter object
 array2d = np.arange(4000).reshape((1000, 4))
 array1d = np.arange(1000)
-tss = TimeSeriesSplitter(X=array2d, y=array1d)
-tss.split(test_periods=30, train_periods=365, n_validations=10)
+tss = TimeSeriesSplitter(x=array2d, y=array1d)
+tss.split(test_periods=30, min_train_periods=365, n_validations=10)
 
 # visualise how split looks
-tss_inputs.plot()
+tss.plot()
 
 # validate model
 model = LinearRegression()
