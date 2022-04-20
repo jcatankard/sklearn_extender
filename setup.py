@@ -20,6 +20,7 @@ setup(
     long_description=long_description,
     packages=find_packages(),
     install_requires=['numpy', 'matplotlib', 'sklearn'],
+    setup_requires=['wheel'],
     keywords=[],
     classifiers=[
         'Programming Language :: Python :: 3',
