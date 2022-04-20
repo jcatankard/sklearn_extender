@@ -7,7 +7,7 @@
  - https://github.com/jcatankard/sklearn_extender
 
 ## pypi
- - add link to pypi project
+ - https://pypi.org/project/sklearn-extender
 
 # overview
 ## model extender
