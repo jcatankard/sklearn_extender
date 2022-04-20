@@ -12,9 +12,6 @@ def generate_data_for_pred_intervals(self, n_trials: int) -> numpy.ndarray:
     size = self.preds.size
     nindex = numpy.arange(y.size, dtype=numpy.int64)
 
-    # clone model to prevent replacement of original fitted model
-    cloned_model = clone(self)
-
     # create array to store results
     all_results = numpy.arange(size * n_trials, dtype=numpy.float64).reshape((n_trials, size))
     for i in range(n_trials):
@@ -24,9 +21,10 @@ def generate_data_for_pred_intervals(self, n_trials: int) -> numpy.ndarray:
         random_index = numpy.random.choice(nindex, size=size, replace=True)
         random_x = x[random_index]
         random_y = y[random_index]
-        # fit
+
+        # clone model to prevent replacement of original fitted model
+        cloned_model = clone(self)
         cloned_model.fit(random_x, random_y)
-        # predict
         all_results[i] = cloned_model.predict(pred_x)
 
     return all_results
@@ -34,7 +32,6 @@ def generate_data_for_pred_intervals(self, n_trials: int) -> numpy.ndarray:
 
 def find_prediction_intervals(self, results: numpy.ndarray, sig_level: float, how: str) -> numpy.ndarray:
     # this returns the pred intervals based on all the bootstrapped predictions
-    # by taking the 100-x and x percentile based on the sum total of each individual result
 
     # initiate pred intervals array to be the same shape as first to row of results eg each row same length as preds
     size = self.preds.size

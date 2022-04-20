@@ -12,21 +12,19 @@ def coefficients(self, labels: list, intercept: bool = True) -> dict:
     return coefs
 
 
-def generate_data_for_coef_intervals(self, n_trials: int) -> numpy.ndarray:
+def generate_data_for_coef_intervals(self, labels: list, n_trials: int) -> list:
     # this bootstraps the training data to create new predictions
 
     # original values
     x = self.train_x
     y = self.train_y
-    pred_x = self.pred_x
-    size = self.preds.size
+    size = y.size
     nindex = numpy.arange(y.size, dtype=numpy.int64)
 
-    # clone model to prevent replacement of original fitted model
-    cloned_model = clone(self)
-
-    # create array to store results
-    all_results = numpy.arange(size * n_trials, dtype=numpy.float64).reshape((n_trials, size))
+    # create list to store results
+    dct_labels = labels + ['intercept']
+    empty_dct = dict.fromkeys(dct_labels, float(0))
+    all_results = [empty_dct.copy() for n in range(n_trials)]
     for i in range(n_trials):
         # seeding for repeatable results
         numpy.random.seed(i)
@@ -34,64 +32,64 @@ def generate_data_for_coef_intervals(self, n_trials: int) -> numpy.ndarray:
         random_index = numpy.random.choice(nindex, size=size, replace=True)
         random_x = x[random_index]
         random_y = y[random_index]
-        # fit
+
+        # clone model to prevent replacement of original fitted model
+        cloned_model = clone(self)
         cloned_model.fit(random_x, random_y)
-        # predict
-        all_results[i] = cloned_model.predict(pred_x)
+
+        # coefs
+        coefs = cloned_model.coefs(labels, intercept=True)
+        for k in coefs:
+            all_results[i][k] = coefs[k]
 
     return all_results
 
 
-def find_coef_conf_intervals(self, sig_level: float) -> dict:
-    # this returns the pred intervals based on all the bootstrapped predictions
-    # by taking the 100-x and x percentile based on the sum total of each individual result
+def find_coef_conf_intervals(self, results: list, sig_level: float) -> dict:
+    # this returns the confidence intervals for each coefficient
 
-    # initiate pred intervals array to be the same shape as first to row of results eg each row same length as preds
-    size = self.preds.size
-    pred_intervals = numpy.arange(size * 2, dtype=numpy.float64).reshape((2, size))
-    sum_preds = numpy.sum(self.preds)
+    labels = results[0].keys()
+    n_trials = len(results)
+    conf_intervals = dict.fromkeys(labels, [float(0), float(0)])
 
-    # calculate the sum of each randomized prediction
-    sum_results = numpy.array([numpy.sum(i) for i in results], dtype=numpy.float64)
+    for k in labels:
+        coefs = numpy.arange(n_trials, dtype=numpy.float64)
+        for n, r in enumerate(results):
+            coefs[n] = r[k]
 
-    # take the 1-x and x percentiles of this prediction
-    percentile_results = numpy.percentile(sum_results, [100 - sig_level, sig_level])
+        intervals = list(numpy.percentile(coefs, [100 - sig_level, sig_level]))
+        conf_intervals[k] = intervals
 
-    avg_diff_lower = numpy.abs(sum_preds - percentile_results[0]) / size
-    avg_diff_upper = numpy.abs(sum_preds - percentile_results[1]) / size
-
-    pred_intervals[0] = self.preds - avg_diff_lower
-    pred_intervals[1] = self.preds + avg_diff_upper
-
-    return pred_intervals
+    return conf_intervals
 
 
-def find_coef_pvalues(self, sig_level: float) -> dict:
-    # this returns the pred intervals based on all the bootstrapped predictions
-    # by taking the 100-x and x percentile based on the sum total of each individual result
+def find_coef_pvalues(self, results: list) -> dict:
+    # this returns the p values for each coefficient
 
-    # initiate pred intervals array to be the same shape as first to row of results eg each row same length as preds
-    size = self.preds.size
-    pred_intervals = numpy.arange(size * 2, dtype=numpy.float64).reshape((2, size))
-    sum_preds = numpy.sum(self.preds)
+    labels = results[0].keys()
+    n_trials = len(results)
+    conf_intervals = dict.fromkeys(labels, float(0))
 
-    # calculate the sum of each randomized prediction
-    sum_results = numpy.array([numpy.sum(i) for i in results], dtype=numpy.float64)
+    for k in labels:
+        coefs = numpy.arange(n_trials, dtype=numpy.float64)
+        for n in range(n_trials):
+            coefs[n] = results[n][k]
 
-    # take the 1-x and x percentiles of this prediction
-    percentile_results = numpy.percentile(sum_results, [100 - sig_level, sig_level])
+        pvalue = 1 - len(coefs[coefs > 0]) / n_trials
+        # inverting for negative coefs
+        pvalue = pvalue if pvalue < 0.5 else 1 - pvalue
+        conf_intervals[k] = pvalue
 
-    avg_diff_lower = numpy.abs(sum_preds - percentile_results[0]) / size
-    avg_diff_upper = numpy.abs(sum_preds - percentile_results[1]) / size
-
-    pred_intervals[0] = self.preds - avg_diff_lower
-    pred_intervals[1] = self.preds + avg_diff_upper
-
-    return pred_intervals
+    return conf_intervals
 
 
-def coef_pvalues(self, sig_level: float = 95.0, n_trials: int = 10 ** 4) -> dict:
+def coef_pvalues(self, labels: list = None, sig_level: float = 95.0, n_trials: int = 10 ** 4) -> dict:
     # returns a higher and lower prediction interval
+
+    if labels is None:
+        labels = [str(i) for i in range(len(self.train_x))]
+    elif not isinstance(labels, list):
+        raise Exception('labels must be list format')
 
     if sig_level < 50:
         raise Exception('significance level should be between 50 and 100.'
@@ -100,13 +98,18 @@ def coef_pvalues(self, sig_level: float = 95.0, n_trials: int = 10 ** 4) -> dict
     if not isinstance(n_trials, int):
         raise Exception('n_trials must be integer')
 
-    all_results = generate_data_for_coef_intervals(self, n_trials)
+    all_results = generate_data_for_coef_intervals(self, labels, n_trials)
 
-    return find_coef_pvalues(self, all_results, sig_level)
+    return find_coef_pvalues(self, all_results)
 
 
-def coef_confidence_intervals(self, sig_level: float = 95.0, n_trials: int = 10 ** 4) -> dict:
+def coef_confidence_intervals(self, labels: list = None, sig_level: float = 95.0, n_trials: int = 10 ** 4) -> dict:
     # returns a higher and lower prediction interval
+
+    if labels is None:
+        labels = [str(i) for i in range(len(self.train_x))]
+    elif not isinstance(labels, list):
+        raise Exception('labels must be list format')
 
     if sig_level < 50:
         raise Exception('significance level should be between 50 and 100.'
@@ -115,6 +118,6 @@ def coef_confidence_intervals(self, sig_level: float = 95.0, n_trials: int = 10 
     if not isinstance(n_trials, int):
         raise Exception('n_trials must be integer')
 
-    all_results = generate_data_for_coef_intervals(self, n_trials)
+    all_results = generate_data_for_coef_intervals(self, labels, n_trials)
 
     return find_coef_conf_intervals(self, all_results, sig_level)

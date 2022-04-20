@@ -130,7 +130,7 @@ avg_error = total_error / tss.n_validations
 #### **kwargs
  - any other key word arguments that would be passed to the sci-kit learn model (such as fit_intercept=True)
 ## methods
-### self.coefs(labels, intercept=True)
+### self.coefs(labels: list, intercept=True)
  - returns model coefficients as a dictionary with labels as keywords
  - includes intercept if = True
  - is not compatible with models that don't have .coef_ attribute
@@ -142,6 +142,10 @@ avg_error = total_error / tss.n_validations
    - 'datapoint' is also best when the predicted metric is a form of average (e.g., conversion rate, average sell price, gross margin)
    - 'overall' is best when predicted metric is 'summable' (e.g., number of items sold) and when the individual prediction values are less important than the aggregated total
      - this will result in narrower prediction intervals than 'datapoint'
+### self.coef_confidence_intervals(labels: list, sig_level: float = 95.0, n_trials: int = 10 ** 4)
+ - returns confidence intervals for each coefficient and intercept for a given level of significance
+### self.coef_pvalues(labels: list, n_trials: int = 10 ** 4)
+ - returns p-values for each coefficient and intercept
 
 ## examples
 <p float="left">
@@ -179,7 +183,16 @@ model.fit(train_x, train_y)
 
 # create coefficient dictionary
 coefs = model.coefs(labels=test_x.columns, intercept=True)
+print('coefficients')
 print(coefs)
+
+coef_pvalues = model.coef_pvalues(labels=labels, n_trials=10 ** 4)
+print('pvalues')
+print(coef_pvalues)
+
+coef_cis = model.coef_confidence_intervals(labels=labels, sig_level=95, n_trials=10 ** 4)
+print('confidence intervals')
+print(coef_cis)
 
 # make predictions
 preds = model.predict(test_x)
