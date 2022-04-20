@@ -156,29 +156,41 @@ avg_error = total_error / tss.n_validations
 ```
 from sklearn_extender.model_extender import model_extender
 from sklearn.linear_model import LinearRegression
-import numpy
+import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
 
-# import and inspect data
-df = pd.read_csv('daily_flights.csv')
+# create dataframe
+df = pd.DataFrame({'date': pd.date_range(start='2018-11-03', end='2022-10-01')})
+df['y'] = (1 + np.sin(df['date'].dt.day) + np.sin(df['date'].dt.weekday) + np.random.rand(len(df))) * 100
+df['weekday_value'] = np.sin(df['date'].dt.weekday)
+df['monthday_value'] = np.sin(df['date'].dt.day)
+df['random_value'] = np.random.rand(len(df))
 
+test_ln = 28
 # split into train and test
-train_df = df[df['date'].dt.year < 2022].copy(deep=True)
+train_df = (df
+            .copy(deep=True)
+            .head(len(df) - test_ln)
+           )
 train_x = (train_df
            .copy(deep=True)
-           .drop(columns=['date', 'flights'])
+           .drop(columns=['date', 'y'])
            )
-train_y = train_df['flights']
+train_y = train_df['y']
 
-test_df = df[df['date'].dt.year == 2022].copy(deep=True)
-test_x = (test_df
+test_df = (df
            .copy(deep=True)
-           .drop(columns=['date', 'flights'])
+           .tail(test_ln)
           )
-test_y = test_df['flights']
+test_x = (test_df
+          .copy(deep=True)
+          .drop(columns=['date', 'y'])
+          )
+test_y = test_df['y']
 
 # initiate fit and predict
-model = model_extender(LinearRegression, multiplicative_seasonality=True)
+model = model_extender(LinearRegression, multiplicative_seasonality=False)
 model.fit(train_x, train_y)
 
 # create coefficient dictionary
@@ -199,6 +211,14 @@ preds = model.predict(test_x)
 
 # create interval ranges
 interval_range = model.prediction_intervals(how='overall', sig_level=95, n_trials=10 ** 4)
+
+# plot results
+plt.plot(test_df['date'], preds, label='preds', color='pink')
+plt.fill_between(test_df['date'], (interval_range[0]), (interval_range[1]), color='blue', alpha=0.5)
+# plt.plot(test_df['date'], test_y, label='actuals', color='orange')
+plt.legend()
+plt.ylim(bottom=0)
+plt.show()
 ```
     
 

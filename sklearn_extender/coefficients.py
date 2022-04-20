@@ -4,11 +4,16 @@ import numpy
 
 def coefficients(self, labels: list, intercept: bool = True) -> dict:
     # returns dictionary with coefficients as values and labels as keys
+    if not isinstance(labels, list):
+        labels = list(labels)
+
+    if len(labels) != self.train_x.shape[1]:
+        raise Exception('train has different number of columns to labels')
+
     coefs = dict(zip(labels, self.coef_))
     if intercept:
         coefs['intercept'] = self.intercept_
 
-    self.coefs = coefs
     return coefs
 
 
@@ -89,7 +94,10 @@ def coef_pvalues(self, labels: list = None, sig_level: float = 95.0, n_trials: i
     if labels is None:
         labels = [str(i) for i in range(len(self.train_x))]
     elif not isinstance(labels, list):
-        raise Exception('labels must be list format')
+        labels = list(labels)
+
+    if len(labels) != self.train_x.shape[1]:
+        raise Exception('train has different number of columns to labels')
 
     if sig_level < 50:
         raise Exception('significance level should be between 50 and 100.'
@@ -109,7 +117,10 @@ def coef_confidence_intervals(self, labels: list = None, sig_level: float = 95.0
     if labels is None:
         labels = [str(i) for i in range(len(self.train_x))]
     elif not isinstance(labels, list):
-        raise Exception('labels must be list format')
+        labels = list(labels)
+
+    if len(labels) != self.train_x.shape[1]:
+        raise Exception('train has different number of columns to labels')
 
     if sig_level < 50:
         raise Exception('significance level should be between 50 and 100.'

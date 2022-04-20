@@ -1,50 +1,42 @@
 from sklearn_extender.model_extender import model_extender
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
-import numpy
+import numpy as np
 import pandas as pd
 import time
 
-# import and inspect data
-raw_df = pd.read_csv('daily_flights.csv')
-print(raw_df.head())
 
-# transform data
-df = (raw_df
-      .copy(deep=True)
-      .assign(date=lambda x: pd.to_datetime(x['date']),
-              month=lambda x: x['date'].dt.month,
-              weekday=lambda x: x['date'].dt.weekday
-              )
-      .sort_values(by='date', ascending=True)
-      )
-weekdays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
-for id, wd in enumerate(weekdays):
-    df[wd] = numpy.where(df['weekday'] == id, 1, 0)
-
-months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
-for id, m in enumerate(months):
-    df[m] = numpy.where(df['month'] == id + 1, 1, 0)
-
-df = df.drop(columns=['month', 'weekday'])
+df = pd.DataFrame({'date': pd.date_range(start='2018-11-03', end='2022-10-01')})
+df['y'] = (1 + np.sin(df['date'].dt.day) + np.sin(df['date'].dt.weekday) + np.random.rand(len(df))) * 100
+df['weekday_value'] = np.sin(df['date'].dt.weekday)
+df['monthday_value'] = np.sin(df['date'].dt.day)
+df['random_value'] = np.random.rand(len(df))
 
 # split into train and test
-train_df = df[df['date'].dt.year < 2022].copy(deep=True)
+test_ln = 28
+# split into train and test
+train_df = (df
+            .copy(deep=True)
+            .head(len(df) - test_ln)
+           )
 train_x = (train_df
            .copy(deep=True)
-           .drop(columns=['date', 'flights'])
+           .drop(columns=['date', 'y'])
            )
-train_y = train_df['flights']
+train_y = train_df['y']
 
-test_df = df[df['date'].dt.year == 2022].copy(deep=True)
-test_x = (test_df
+test_df = (df
            .copy(deep=True)
-           .drop(columns=['date', 'flights'])
+           .tail(test_ln)
           )
-test_y = test_df['flights']
+test_x = (test_df
+          .copy(deep=True)
+          .drop(columns=['date', 'y'])
+          )
+test_y = test_df['y']
 
 # initiate fit and predict
-model = model_extender(LinearRegression, multiplicative_seasonality=True)
+model = model_extender(LinearRegression, multiplicative_seasonality=False)
 model.fit(train_x, train_y)
 preds = model.predict(test_x)
 
@@ -55,13 +47,13 @@ interval_range = model.prediction_intervals(how='overall', sig_level=95, n_trial
 t1 = time.time()
 print('time', round(t1 - t0, 4))
 
-sum_actuals = numpy.sum(test_y)
+sum_actuals = np.sum(test_y)
 print(model.coefs(labels=list(train_x.columns)))
-sum_lower = numpy.sum(interval_range[0])
+sum_lower = np.sum(interval_range[0])
 print(round(sum_lower, 1), round(sum_lower / sum_actuals - 1, 4))
-sum_preds = numpy.sum(preds)
+sum_preds = np.sum(preds)
 print(round(sum_preds, 1), round(sum_preds / sum_actuals - 1, 4))
-sum_upper = numpy.sum(interval_range[1])
+sum_upper = np.sum(interval_range[1])
 print(round(sum_upper, 1), round(sum_upper / sum_actuals - 1, 4))
 
 # plot results
