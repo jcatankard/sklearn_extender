@@ -1,17 +1,11 @@
 import pandas
 import numpy
-from sklearn.linear_model import LassoCV
-import matplotlib.pyplot as plt
+from sklearn.linear_model import LassoCV, LinearRegression
 
 
 class TimeSeriesForecast():
 
-    def __init__(self, multiplicative_seasonality: bool = False, train_size: int = None):
-
-        if isinstance(multiplicative_seasonality, bool):
-            self.multiplicative_seasonality = multiplicative_seasonality
-        else:
-            raise TypeError('multiplicative_seasonality must be a boolean value')
+    def __init__(self, train_size: int = None, fourier_order: int = 5):
 
         if (isinstance(train_size, int) & (train_size != 0)) | isinstance(train_size, type(None)):
             self.train_size = train_size
@@ -19,27 +13,27 @@ class TimeSeriesForecast():
             raise TypeError('train_size must be None or a non-zero integer')
 
         self.coefs = None
+        self.fourier_order = fourier_order
         self.poly_coefs = None
         self.signals = None
         self.datetime_start = None
         self.datetime_freq = None
         self.model = None
         self.check_columns = None
+        self.seasonality = None
+        self.trend = None
+        self.noise = None
 
-    def create_signals(self, n: int, max_n: int, df: pandas.DataFrame) -> numpy.array:
+    def create_signals(self, n: int, t: numpy.array, y: numpy.array) -> numpy.array:
         # create and filter signal based on random n
 
-        # create random possible start and end based on len n
-        start_range = range(0, max_n - n + 1)
-        numpy.random.seed(100)
-        start = numpy.random.choice(start_range)
-        end = start + n
-        ynew = df['y'][start: end].values
-        t = df['ds'][start: end].values
+        start = 0
+        ynew = y[start: n]
+        tnew = t[start: n]
 
         # find and remove trend
-        poly_coefs = numpy.polyfit(t, ynew, deg=1)
-        trend = numpy.poly1d(poly_coefs)(t)
+        poly_coefs = numpy.polyfit(tnew, ynew, deg=1)
+        trend = numpy.poly1d(poly_coefs)(tnew)
         ynew = ynew - trend
 
         # fft
@@ -49,15 +43,9 @@ class TimeSeriesForecast():
         # frequencies, dt is just 1 unit
         xf = numpy.fft.rfftfreq(n)
 
-        # filter based on frequencies that are divisors of given multiplier
-        multiplier = 4
-        flter1 = multiplier / xf[1:] == numpy.round(multiplier / xf[1:], 0)
-        flter1 = numpy.concatenate(([False], flter1))
         # create filter based on psd
         filter_value = numpy.mean(psd) + 2 * numpy.std(psd, ddof=0)
-        flter2 = psd >= filter_value
-        # combine filters
-        flter = flter2 # flter1 * flter2
+        flter = psd >= filter_value
 
         # filter freqs, amps and phases
         frequencies = numpy.abs(xf[flter])
@@ -69,68 +57,132 @@ class TimeSeriesForecast():
 
         return numpy.array([frequencies, amplitudes, phases]).T
 
+    @staticmethod
+    def build_signal(signals: numpy.array, t: numpy.array) -> numpy.array:
+        # create one composite signal from individual signals
+
+        new_signal = numpy.zeros(t.size, dtype=numpy.float64)
+        for s in signals:
+            # 0 = freq, 1 = amplitude, 2 = phase
+            new_signal += s[1] * numpy.sin(s[2] + 2 * numpy.pi * s[0] * t)
+
+        return new_signal
+
+    def find_best_signal(self, ns: numpy.array, y_adjust: numpy.array, t: numpy.array):
+        # find the signal that best fits y_adjust by minimising the mse
+
+        mse_inner = numpy.inf
+        for n in ns:
+            # create and filter signal
+            signals = self.create_signals(n, t, y_adjust)
+
+            for sn in range(len(signals)):
+                # change amp to 0
+                signal_to_build = signals[sn]
+                signal_to_build[1] = numpy.float(1)
+                new_signal = self.build_signal([signal_to_build], t)
+
+                x = numpy.array([new_signal], dtype=numpy.float64).T
+                model = LinearRegression(fit_intercept=True, positive=True)
+                model.fit(x, y_adjust)
+                amp = model.coef_[0]
+                new_signal = new_signal * amp
+
+                # create and add new trend
+                y_de_seasoned = y_adjust - new_signal
+                poly_coefs = numpy.polyfit(t, y_de_seasoned, deg=1)
+                trend = numpy.poly1d(poly_coefs)(t)
+                new_signal += trend
+
+                # evaluate fit
+                mse_new = numpy.mean((new_signal - y_adjust) ** 2)
+                if mse_new < mse_inner:
+                    mse_inner = mse_new
+                    best_signal = numpy.array([signal_to_build])
+                    # change amp to coef
+                    best_signal[0][1] = amp
+
+        return best_signal, mse_inner
+
     def fit_seasonality(self, df: pandas.DataFrame):
         # calculate seasonality trends with fast fourier transformation
 
         max_n = len(df)
         min_n = (max_n + 2) // 2
-        numpy.random.seed(100)
-        rand_ns = numpy.random.randint(low=min_n, high=max_n + 1, size=max_n, dtype=int)
-
+        ns = numpy.arange(min_n, max_n + 1)
+        y_adjust = numpy.array(df['y'])
+        t = numpy.array(df['ds'])
+        all_signals = []
+        frequencies = []
         mse = numpy.inf
-        for n in rand_ns:
 
-            # create and filter signal
-            signals = self.create_signals(n, max_n, df)
+        # find signal that best fits y then subtract and repeat to find signal that fits the remaining y
+        for i in range(self.fourier_order):
 
-            # combine signals to fit
-            new_signal = numpy.zeros(len(df['ds']), dtype=numpy.float64)
-            for s in signals:
-                # 0 = freq, 1 = amplitude, 2 = phase
-                new_signal += s[1] * numpy.sin(s[2] + 2 * numpy.pi * s[0] * df['ds'])
+            best_signal, mse_inner = self.find_best_signal(ns, y_adjust, t)
 
-            # create and add new global trend
-            y_de_seasoned = df['y'] - new_signal
-            poly_coefs = numpy.polyfit(df['ds'], y_de_seasoned, deg=1)
-            trend = numpy.poly1d(poly_coefs)(df['ds'])
-            new_signal += trend
+            # if frequency has already been used then end
+            if best_signal[0][0] in frequencies:
+                break
+            else:
+                frequencies.append(best_signal[0][0])
 
-            # evaluate fit
-            mse_new = numpy.mean((new_signal - df['y']) ** 2)
-            if mse_new < mse:
-                mse = mse_new
-                self.signals = signals
-                self.poly_coefs = poly_coefs
-                df['trend'] = trend
+            # if mse has improved 10% then continue else end to avoid over fitting
+            if mse_inner < mse / 1.1:
+                mse = mse_inner
+                all_signals.extend(best_signal)
+                # remove best signal from y so we can fit a new signal to the remainder
+                y_adjust -= self.build_signal(best_signal, t)
+            else:
+                break
 
-        # build signals
-        print('train mse', mse)
-        print(self.signals)
+        self.signals = numpy.array(all_signals)
+
+        # find global trend
+        poly_coefs = numpy.polyfit(t, y_adjust, deg=1)
+        self.poly_coefs = poly_coefs
+        global_trend = numpy.poly1d(poly_coefs)(t)
+        df['trend'] = global_trend
+        self.trend = global_trend
+
+        # build overall seasonality
+        self.seasonality = self.build_signal(self.signals, t)
+
+        # add individual signals to dataframe
         for s in self.signals:
-            print(1 / s[0])
+            col = str(round(1 / s[0], 6))
             # 0 = freq, 1 = amplitude, 2 = phase
-            df[str(s[0])] = s[1] * numpy.sin(s[2] + 2 * numpy.pi * s[0] * df['ds'])
+            sig = s[1] * numpy.sin(s[2] + 2 * numpy.pi * s[0] * t)
+            df[col] = sig
+
+        self.noise = numpy.array(df['y'] - self.trend - self.seasonality)
 
         return df
 
     def fit(self, df: pandas.DataFrame):
 
+        # validate input is dataframe
         if not isinstance(df, pandas.DataFrame):
             raise TypeError('df must be a pandas dataframe')
 
+        # validate columns of dateframe contain ds & y
         if not (('ds' in df.columns) & ('y' in df.columns)):
             raise ValueError('df must contain columns labelled ds and y')
 
+        # save columns to validate for prediction df
         self.check_columns = [c for c in df.columns if c != 'y']
 
+        # assign datetime type and sort dataframe
         df = (df
               .assign(ds=lambda x: pandas.to_datetime(x['ds']))
               .sort_values(by='ds')
               )
 
+        # if train size is defined take tail
         if self.train_size is not None:
             df = df.tail(self.train_size)
 
+        # take frequency to validate prediction df and check for missing datetimes
         freq = pandas.infer_freq(df['ds'])
         self.datetime_freq = freq
         dr = pandas.date_range(df['ds'].min(), df['ds'].max(), freq=freq)
@@ -139,24 +191,14 @@ class TimeSeriesForecast():
         if len(df) > len(dr):
             raise Exception('dataframe has too many datetime entries')
 
-        if self.multiplicative_seasonality:
-            cols = [c for c in df.columns if c != 'ds']
-            if df[cols].values.min() < 0:
-                # cannot take logarithm of negative
-                raise ValueError('values must be >= 0')
-
-            # transform values for multiplicative_seasonality
-            # +1 to not raise error when boolean values are 0
-            df[cols] = df[cols].applymap(lambda x: numpy.log(x + 1))
-
         # convert ds to numeric array
         self.datetime_start = df['ds'].min()
         df['ds'] = numpy.arange(len(df))
 
-        # fft fit seasonality
+        # fit seasonality and trend
         df_tofit = self.fit_seasonality(df)
 
-        # fit model
+        # fit model with Lasso to help avoid overfitting signal and fit additional features if provided
         x = df_tofit.drop(columns=['ds', 'y'])
         model = LassoCV(alphas=[0.001, 0.01, 0.1, 1, 10, 100, 1000],
                         fit_intercept=True, positive=False,
@@ -165,32 +207,38 @@ class TimeSeriesForecast():
         model.fit(x, df_tofit['y'])
         self.model = model
 
+        # make coefficients
         coefs = dict(zip(x.columns, model.coef_))
+        coefs = {c: coefs[c] for c in coefs if coefs[c] != float(0)}
         coefs['intercept'] = model.intercept_
-        print(coefs)
         self.coefs = coefs
 
     def predict(self, df: pandas.DataFrame) -> numpy.array:
-        # creates predictions based on datetime array, x
+        # creates predictions based on df and fitted model
 
+        # check input in dataframe
         if not isinstance(df, pandas.DataFrame):
             raise TypeError('df must be a pandas dataframe')
 
         if 'ds' not in df.columns:
             raise ValueError('df must contain columns labelled ds and y')
 
+        # checking extra columns have not been added that were not used for fitting
         extra_cols = [c for c in df.columns if c not in self.check_columns]
         if len(extra_cols):
             raise ValueError(f'dataframe contains extra columns {extra_cols}')
 
+        # assign datetime type and sort dataframe
         df = (df
-              .assign(ds=lambda x: pandas.to_datetime(x['ds']))
+              .assign(ds=lambda u: pandas.to_datetime(u['ds']))
               .sort_values(by='ds')
               )
 
+        # check freq matches fitted datetimes
         if pandas.infer_freq(df['ds']) != self.datetime_freq:
             raise ValueError('new datetime array does not match freq of fitted array')
 
+        # create new dataframe for making predictions
         new_df = pandas.DataFrame()
         start = numpy.min([self.datetime_start, df['ds'].min()])
         new_df['ds'] = pandas.date_range(start, df['ds'].max(), freq=self.datetime_freq)
@@ -207,14 +255,14 @@ class TimeSeriesForecast():
 
         # build signals
         for s in self.signals:
+            col = str(round(1 / s[0], 6))
             # 0 = freq, 1 = amplitude, 2 = phase
-            new_df[str(s[0])] = s[1] * numpy.sin(s[2] + 2 * numpy.pi * s[0] * new_df['ds'])
+            new_df[col] = s[1] * numpy.sin(s[2] + 2 * numpy.pi * s[0] * new_df['ds'])
 
-        x = (new_df
+        # filter after pred start
+        x = (new_df[new_df['ds'] >= index_pred_start]
              .copy(deep=True)
              .drop(columns=['ds'])
              )
-        new_df['y_preds'] = self.model.predict(x)
 
-        # filter preds using x
-        return new_df[new_df['ds'] >= index_pred_start]['y_preds']
+        return self.model.predict(x)
