@@ -48,5 +48,4 @@ plt.plot(df['ds'][: train_len], model.trend, label='trend')
 plt.plot(df['ds'][: train_len], model.noise, label='noise')
 
 plt.legend()
-# plt.ylim(0, df['y'].max() + 10)
 plt.show()
