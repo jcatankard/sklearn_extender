@@ -1,7 +1,6 @@
 # sklearn_extender
 
 - the purpose of this project is to add a little extra functionality to the sci-kit learn library that I have found useful and from which the larger community may also benefit.
-- a secondary purpose is simply for me to learn how to create and publish a python package.
 
 ## github
  - https://github.com/jcatankard/sklearn_extender
@@ -10,7 +9,7 @@
  - https://pypi.org/project/sklearn-extender
 
 # overview
-## model extender
+## model extender:
 - expands on the functionality of regular sci-kit learn models
 - adding multiplicative seasonality
 - calculating prediction intervals
@@ -24,7 +23,7 @@
 - useful for learning how good our models are and comparing which model is best if you have many in a robust way
 
 ## timeseries_forecast:
-- uses fast fourier and linear regression to infer seasonality from timeseries data
+- uses fast fourier transformation and linear regression to infer seasonality from timeseries data
 - unlike other timeseries models, user to not have to specify any seasonality as the aim is to infer it entirely from the data
 - model should be able to adapt to training data with partial seasons (e.g. model yearly seasonality from 9 months or 14 months of data)
 - though the more training data and more seasonal cycles the better is will fit
