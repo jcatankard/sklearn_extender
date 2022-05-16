@@ -17,7 +17,7 @@ def create_signal(n: int) -> pd.DataFrame:
     yearly_seasonality = 5 * np.sin(2 * np.pi * t / 365.25) + 1
     trend = 20 * np.arange(n) / n
     y_clean = weekly_seasonality + yearly_seasonality + trend + quarterly_seasonality + monthly_seasonality
-    y = y_clean + 0.25 * np.random.randn(n)
+    y = y_clean + 2 * np.random.randn(n)
 
     df = pd.DataFrame()
     df['ds'] = pd.date_range(start=datetime.date(2020, 1, 1), periods=n)
@@ -25,13 +25,13 @@ def create_signal(n: int) -> pd.DataFrame:
 
     return df
 
+
 # fit
 train_len = 731
 test_len = 730
 df = create_signal(train_len + test_len)
 model = TimeSeriesForecast()
 model.fit(df.head(train_len))
-
 print(model.coefs)
 
 # predict

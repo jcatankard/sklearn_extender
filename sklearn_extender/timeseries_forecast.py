@@ -24,7 +24,8 @@ class TimeSeriesForecast():
         self.trend = None
         self.noise = None
 
-    def create_signals(self, n: int, t: numpy.array, y: numpy.array) -> numpy.array:
+    @staticmethod
+    def create_signals(n: int, t: numpy.array, y: numpy.array) -> numpy.array:
         # create and filter signal based on random n
 
         start = 0
@@ -131,7 +132,7 @@ class TimeSeriesForecast():
             if mse_inner < mse / 1.1:
                 mse = mse_inner
                 all_signals.extend(best_signal)
-                # remove best signal from y so we can fit a new signal to the remainder
+                # remove best signal from y, so we can fit a new signal to the remainder
                 y_adjust -= self.build_signal(best_signal, t)
             else:
                 break
