@@ -264,6 +264,10 @@ plt.show()
  - returns numpy array of what is not considered part of the seasonality or trend
 
 ## examples
+<p float="left">
+  <img src="./images/timeseries_forecast.png" width="100%" />
+</p>
+
 ```
 import matplotlib.pyplot as plt
 from sklearn_extender.timeseries_forecast import TimeSeriesForecast
@@ -283,7 +287,7 @@ def create_signal(n: int) -> pd.DataFrame:
     yearly_seasonality = 5 * np.sin(2 * np.pi * t / 365.25) + 1
     trend = 20 * np.arange(n) / n
     y_clean = weekly_seasonality + yearly_seasonality + trend + quarterly_seasonality + monthly_seasonality
-    y = y_clean + 2 * np.random.randn(n)
+    y = y_clean + 0.5 * np.random.randn(n)
 
     df = pd.DataFrame()
     df['ds'] = pd.date_range(start=datetime.date(2020, 1, 1), periods=n)
