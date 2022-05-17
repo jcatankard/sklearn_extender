@@ -6,8 +6,6 @@ from sklearn.metrics import mean_squared_error
 import pandas as pd
 import numpy as np
 import datetime
-from fbprophet import Prophet
-
 
 
 def create_signal(n: int) -> pd.DataFrame:
@@ -43,15 +41,7 @@ print(f'min_train_periods: {tss.min_train_periods}')
 # validate TimeSeriesForecast model
 tsf_model = TimeSeriesForecast()
 
-# create prophet model
-fbp_model = Prophet()
-fbp_model.fit(df)
-future = fbp_model.make_future_dataframe(periods=365)
-fbp_model.predict(future)
-
-
 tsf_error = 0
-fbf_error = 0
 count = 1
 for X_train, X_val, y_train, y_val in tss.training_validation_data:
 
@@ -65,13 +55,6 @@ for X_train, X_val, y_train, y_val in tss.training_validation_data:
     val_df['ds'] = X_val
     y_pred = tsf_model.predict(val_df)
     tsf_error += mean_squared_error(y_val, y_pred, squared=False)
-
-    # fbp
-    fbp_model.fit(train_df)
-    future = fbp_model.make_future_dataframe(periods=X_val.size)
-    fbp_model.predict(future)
-    fb_pred = future['yhat'].tail(X_val.size)
-    fbf_error += mean_squared_error(y_val, fb_pred, squared=False)
 
     print(f'{count} validation complete')
     count += 1
