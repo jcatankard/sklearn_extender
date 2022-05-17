@@ -117,6 +117,3 @@ for X_train, X_val, y_train, y_val in tss.training_validation_data:
 
 print(f'linear forecast avg error: {linear_error / tss.n_validations}')
 print(f'lasso forecast avg error: {lasso_error / tss.n_validations}')
-
-
-
