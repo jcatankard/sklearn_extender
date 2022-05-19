@@ -3,7 +3,7 @@ import numpy
 from sklearn.linear_model import LassoCV, LinearRegression
 
 
-class TimeSeriesForecast():
+class TimeSeriesForecast:
 
     def __init__(self, train_size: int = None, fourier_order: int = 5):
 
