@@ -188,9 +188,9 @@ class TimeSeriesForecast:
         self.datetime_freq = freq
         dr = pandas.date_range(df['ds'].min(), df['ds'].max(), freq=freq)
         if len(df) < len(dr):
-            raise Exception('dataframe is missing datetime entries')
+            raise ValueError('dataframe is missing datetime entries')
         if len(df) > len(dr):
-            raise Exception('dataframe has too many datetime entries')
+            raise ValueError('dataframe has too many datetime entries')
 
         # convert ds to numeric array
         self.datetime_start = df['ds'].min()

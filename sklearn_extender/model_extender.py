@@ -18,12 +18,12 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
             if isinstance(multiplicative_seasonality, bool):
                 self.multiplicative_seasonality = multiplicative_seasonality
             else:
-                raise Exception('multiplicative_seasonality must be a boolean value')
+                raise TypeError('multiplicative_seasonality must be a boolean value')
 
             if (isinstance(train_size, int) & (train_size != 0)) | isinstance(train_size, type(None)):
                 self.train_size = train_size
             else:
-                raise Exception('train_size must be None or a non-zero integer')
+                raise TypeError('train_size must be None or a non-zero integer')
 
             self.preds = None
             self.train_x = None
@@ -62,7 +62,7 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
             if self.multiplicative_seasonality:
                 if (x.min() < 0) | (y.min() < 0):
                     # cannot take logarithm of negative
-                    raise Exception('X and y values must be >= 0')
+                    raise ValueError('X and y values must be >= 0')
 
                 # transform values for multiplicative_seasonality
                 # +1 to not raise error when boolean values are 0
@@ -86,7 +86,7 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
             if self.multiplicative_seasonality:
                 if x.min() < 0:
                     # cannot take logarithm of negative
-                    raise Exception('X values must be >= 0')
+                    raise ValueError('X values must be >= 0')
 
                 # transform values for multiplicative_seasonality
                 # +1 to not raise error when boolean values are 0
