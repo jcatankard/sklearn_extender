@@ -7,7 +7,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(here, 'README.md'), encoding='utf-8') as fh:
     long_description = '\n' + fh.read()
 
-VERSION = '0.0.4'
+VERSION = '0.0.5'
 DESCRIPTION = 'add useful functionality to sci-kit learn'
 
 # Setting up
@@ -18,6 +18,7 @@ setup(
     description=DESCRIPTION,
     long_description_content_type='text/markdown',
     long_description=long_description,
+    url='https://github.com/jcatankard/sklearn_extender',
     packages=find_packages(),
     install_requires=['numpy', 'matplotlib', 'sklearn'],
     setup_requires=['wheel'],
