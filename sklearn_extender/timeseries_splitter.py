@@ -29,7 +29,7 @@ class TimeSeriesSplitter:
             self.y_data = numpy.array(y.values)
 
         if len(x) != len(y):
-            raise Exception('X and y must be of same length')
+            raise ValueError('X and y must be of same length')
         else:
             self.rows = len(y)
             self.row_index = numpy.arange(self.rows)
@@ -39,41 +39,41 @@ class TimeSeriesSplitter:
         # raises error if these inputs are incompatible compared to the overall rows of the data
 
         if (train_periods is not None) & (min_train_periods is not None):
-            raise Exception(
+            raise ValueError(
                 'values cannot be assigned for both train_periods & min_train_periods'
             )
 
         if (train_periods is None) & (min_train_periods is None):
-            raise Exception('one of train_periods & min_train_periods must be assigned')
+            raise ValueError('one of train_periods & min_train_periods must be assigned')
 
         if window_type not in ['rolling', 'expanding']:
-            raise Exception('training windows must either be "rolling" or "expanding"')
+            raise ValueError('training windows must either be "rolling" or "expanding"')
 
         if (train_periods is not None) & (window_type == 'expanding'):
-            raise Exception(
+            raise ValueError(
                 'if window is expanding, min_train_periods should be assigned'
                 ' train_periods is for a rolling window.'
             )
 
         if (min_train_periods is not None) & (window_type == 'rolling'):
-            raise Exception(
+            raise ValueError(
                 'if window is rolling, train_periods should be assigned'
                 ' min_train_periods is for an expanding window.'
             )
         if min_train_periods is not None:
             if min_train_periods <= 1:
-                raise Exception('min_train_periods must be at least 2')
+                raise ValueError('min_train_periods must be at least 2')
         if train_periods is not None:
             if train_periods <= 1:
-                raise Exception('train_periods must be at least 2')
+                raise ValueError('train_periods must be at least 2')
         if n_validations is not None:
             if n_validations == 0:
-                raise Exception('n_validations must be at least 1')
+                raise ValueError('n_validations must be at least 1')
 
         if n_validations is not None:
             min_train_periods = min_train_periods if min_train_periods is not None else train_periods
             if n_validations * test_periods + min_train_periods > self.rows:
-                raise Exception(
+                raise ValueError(
                     'the data set is not large enough based on the requirements for'
                     ' the number of validations and size of test_periods & train periods.'
                 )
