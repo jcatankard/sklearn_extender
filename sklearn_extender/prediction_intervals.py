@@ -68,14 +68,14 @@ def prediction_intervals(self, how='datapoint', sig_level: float = 95.0,
     # returns a higher and lower prediction interval
 
     if sig_level < 50:
-        raise Exception('significance level should be between 50 and 100.'
+        raise ValueError('significance level should be between 50 and 100.'
                         'common values include 90, 95, 97.5, 99 etc.')
 
     if how not in ['overall', 'datapoint']:
-        raise Exception('how must be either datapoint or overall')
+        raise ValueError('how must be either datapoint or overall')
 
     if not isinstance(n_trials, int):
-        raise Exception('n_trials must be integer')
+        raise TypeError('n_trials must be integer')
 
     all_results = generate_data_for_pred_intervals(self, n_trials)
 
