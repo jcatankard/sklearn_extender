@@ -69,7 +69,7 @@ def prediction_intervals(self, how='datapoint', sig_level: float = 95.0,
 
     if sig_level < 50:
         raise ValueError('significance level should be between 50 and 100.'
-                        'common values include 90, 95, 97.5, 99 etc.')
+                         'common values include 90, 95, 97.5, 99 etc.')
 
     if how not in ['overall', 'datapoint']:
         raise ValueError('how must be either datapoint or overall')
@@ -77,6 +77,6 @@ def prediction_intervals(self, how='datapoint', sig_level: float = 95.0,
     if not isinstance(n_trials, int):
         raise TypeError('n_trials must be integer')
 
-    all_results = generate_data_for_pred_intervals(self, n_trials)
+    all_results = self.generate_data_for_pred_intervals(n_trials)
 
-    return find_prediction_intervals(self, all_results, sig_level, how)
+    return self.find_prediction_intervals(all_results, sig_level, how)

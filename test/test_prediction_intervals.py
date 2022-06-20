@@ -42,8 +42,8 @@ preds = model.predict(test_x)
 
 # create interval ranges
 t0 = time.time()
-interval_range = model.prediction_intervals(how='overall', sig_level=95, n_trials=10 ** 4)
-# interval_range = model.prediction_intervals(how='datapoint', sig_level=95, n_trials=10 ** 4)
+# interval_range = model.prediction_intervals(how='overall', sig_level=95, n_trials=10 ** 4)
+interval_range = model.prediction_intervals(how='datapoint', sig_level=95, n_trials=10 ** 4)
 t1 = time.time()
 print('time', round(t1 - t0, 4))
 

@@ -105,5 +105,7 @@ def model_extender(model, multiplicative_seasonality: bool = False, train_size: 
         coef_pvalues = sklearn_extender.coefficients.coef_pvalues
         coef_confidence_intervals = sklearn_extender.coefficients.coef_confidence_intervals
         prediction_intervals = sklearn_extender.prediction_intervals.prediction_intervals
+        generate_data_for_pred_intervals = sklearn_extender.prediction_intervals.generate_data_for_pred_intervals
+        find_prediction_intervals = sklearn_extender.prediction_intervals.find_prediction_intervals
 
     return SKLearnExtenderClass(multiplicative_seasonality, train_size, **kwargs)
